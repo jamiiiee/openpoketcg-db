@@ -1,5 +1,5 @@
 import requests
-import os
+import time
 
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -25,14 +25,14 @@ def find_series_tables():
 
 
 def get_rebuild_links(tables, eras):
-    downloaded_sets = {os.path.splitext(f)[0] for f in HTML_DIR.rglob("*.html")}
+    downloaded_sets = {f.stem for f in HTML_DIR.rglob("*.html")}
 
     return [
         (a["href"], a.text.strip().replace("/", " "), th.text.strip())
         for table in tables
         for th in table.find_all("th")
         if th.text.strip() in eras
-        for a in table.find_all("a", href=True)
+        for a in (table.find("td")).find_all("a", href=True)
         if a.text.strip().replace("/", " ") not in downloaded_sets
     ]
 
@@ -43,7 +43,7 @@ def get_updated_links(tables, eras):
         for table in tables
         for th in table.find_all("th")
         if th.text.strip() in eras
-        for a in table.find_all("a", href=True)[-4:]
+        for a in (table.find("td")).find_all("a", href=True)[-4:]
     ]
 
 
@@ -51,6 +51,7 @@ def download_html(links):
     with requests.Session() as session:
         session.headers.update({"User-Agent": USER_AGENT})
         for link, title, era in links:
+            time.sleep(4)
             url = f"https://bulbapedia.bulbagarden.net{link}"
             era_dir = HTML_DIR / era
             era_dir.mkdir(parents=True, exist_ok=True)
