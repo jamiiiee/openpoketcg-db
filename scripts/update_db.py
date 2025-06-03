@@ -1,3 +1,4 @@
+from scraper.download import update_html
 from scraper.db import db_cursor
 
 
@@ -7,6 +8,7 @@ def get_ongoing_era_names():
         return [row[0] for row in cur.fetchall()]
 
 
-# download(ongoing_eras)
+update_html(rebuild=False, eras=get_ongoing_era_names())
+
 # data = scraper()
 # update sets and cards

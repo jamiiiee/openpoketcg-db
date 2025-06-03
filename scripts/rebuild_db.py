@@ -1,3 +1,4 @@
+from scraper.download import update_html
 from scraper.db import db_cursor
 
 SQL_TRUNCATE = """
@@ -20,6 +21,7 @@ def get_era_names():
         return [row[0] for row in cur.fetchall()]
 
 
-# download(eras)
+update_html(rebuild=True, eras=get_era_names())
+
 # data = scraper()
 # set sets and cards
