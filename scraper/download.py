@@ -25,23 +25,24 @@ def find_series_tables():
 
 
 def get_rebuild_links(tables, eras):
-    downloaded_sets = {
-        os.path.splitext(f)[0] for f in os.listdir(HTML_DIR) if f.endswith(".html")
-    }
+    downloaded_sets = {os.path.splitext(f)[0] for f in HTML_DIR.rglob("*.html")}
+
     return [
-        (a["href"], a.text.strip().replace("/", " "))
+        (a["href"], a.text.strip().replace("/", " "), th.text.strip())
         for table in tables
+        for th in table.find_all("th")
+        if th.text.strip() in eras
         for a in table.find_all("a", href=True)
-        if any(th.text.strip() in eras for th in table.find_all("th"))
         if a.text.strip().replace("/", " ") not in downloaded_sets
     ]
 
 
 def get_updated_links(tables, eras):
     return [
-        (a["href"], a.text.strip().replace("/", " "))
+        (a["href"], a.text.strip().replace("/", " "), th.text.strip())
         for table in tables
-        if any(th.text.strip() in eras for th in table.find_all("th"))
+        for th in table.find_all("th")
+        if th.text.strip() in eras
         for a in table.find_all("a", href=True)[-4:]
     ]
 
@@ -49,9 +50,11 @@ def get_updated_links(tables, eras):
 def download_html(links):
     with requests.Session() as session:
         session.headers.update({"User-Agent": USER_AGENT})
-        for link, title in links:
+        for link, title, era in links:
             url = f"https://bulbapedia.bulbagarden.net{link}"
-            filename = HTML_DIR / f"{title}.html"
+            era_dir = HTML_DIR / era
+            era_dir.mkdir(parents=True, exist_ok=True)
+            filename = era_dir / f"{title}.html"
 
             try:
                 response = session.get(url)
