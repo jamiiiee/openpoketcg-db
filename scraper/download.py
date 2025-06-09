@@ -1,5 +1,6 @@
 import requests
 import time
+import unicodedata
 
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -10,7 +11,11 @@ TCG_RELEASES_URL = "https://bulbapedia.bulbagarden.net/wiki/Template:TCG_Release
 HTML_DIR = Path("html")
 
 
-def find_series_tables():
+def _normalise_name(name):
+    return unicodedata.normalize("NFKC", name).replace("\u00a0", " ").strip()
+
+
+def _find_series_tables():
     with requests.Session() as session:
         session.headers.update({"User-Agent": USER_AGENT})
         try:
@@ -24,36 +29,36 @@ def find_series_tables():
     return soup.find_all("table", {"width": "100%"})
 
 
-def get_rebuild_links(tables, eras):
-    downloaded_sets = {f.stem for f in HTML_DIR.rglob("*.html")}
+def _get_rebuild_links(tables, eras):
+    downloaded_sets = {_normalise_name(f.stem) for f in HTML_DIR.rglob("*.html")}
 
     return [
         (a["href"], a.text.strip().replace("/", " "), th.text.strip())
         for table in tables
         for th in table.find_all("th")
-        if th.text.strip() in eras
+        if _normalise_name(th.text.strip()) in eras
         for a in (table.find("td")).find_all("a", href=True)
-        if a.text.strip().replace("/", " ") not in downloaded_sets
+        if _normalise_name(a.text.strip().replace("/", " ")) not in downloaded_sets
     ]
 
 
-def get_updated_links(tables, eras):
+def _get_updated_links(tables, eras):
     return [
         (a["href"], a.text.strip().replace("/", " "), th.text.strip())
         for table in tables
         for th in table.find_all("th")
-        if th.text.strip() in eras
+        if _normalise_name(th.text.strip()) in eras
         for a in (table.find("td")).find_all("a", href=True)[-4:]
     ]
 
 
-def download_html(links):
+def _download_html(links):
     with requests.Session() as session:
         session.headers.update({"User-Agent": USER_AGENT})
         for link, title, era in links:
             time.sleep(4)
             url = f"https://bulbapedia.bulbagarden.net{link}"
-            era_dir = HTML_DIR / era
+            era_dir = HTML_DIR / _normalise_name(era)
             era_dir.mkdir(parents=True, exist_ok=True)
             filename = era_dir / f"{title}.html"
 
@@ -72,11 +77,11 @@ def update_html(rebuild, eras):
     if not HTML_DIR.exists():
         HTML_DIR.mkdir(parents=True)
 
-    tables = find_series_tables()
+    tables = _find_series_tables()
 
     if rebuild:
-        links = get_rebuild_links(tables, eras)
+        links = _get_rebuild_links(tables, eras)
     else:
-        links = get_updated_links(tables, eras)
+        links = _get_updated_links(tables, eras)
 
-    download_html(links)
+    _download_html(links)

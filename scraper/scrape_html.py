@@ -1,6 +1,6 @@
 import os
-from parse_pages import find_release_date
-from parse_tables import parse_tables
+from scraper.parse_pages import find_release_date
+from scraper.parse_tables import parse_tables
 
 
 def _get_set_file_paths():
@@ -30,35 +30,23 @@ def _process_set_file(file_path, language, set_name):
         print(f"Could not read {file_path}: {e}")
 
 
-def _filter_data(rows):
-    if len(rows) == 0:
-        return []
-
-    print(rows)
-
-    headers = list(rows[0].keys())
-    non_empty_columns = []
-
-    for header in headers:
-        values = [row[header] for row in rows if row[header] not in ("-", "")]
-        if len(set(values)) > 1:
-            non_empty_columns.append(header)
-
-    filtered_rows = [{key: row[key] for key in non_empty_columns} for row in rows]
-
-    return filtered_rows
-
-
-def scrape_html(language="English"):
+def scrape_html(language_map, era_map):
     file_paths = _get_set_file_paths()
-    for file_path, era_name, set_name in file_paths[:5]:
+    results = []
+    for file_path, era_name, set_name in file_paths:
+        era_id, language_id = era_map[era_name]
         release_date, parsed_tables, set_type = _process_set_file(
-            file_path, language, set_name
+            file_path, language_map[language_id], set_name
         )
-        filtered_tables = [_filter_data(table) for table in parsed_tables]
-        print(f"Era: {era_name}, Set: {set_name}, Release Date: {release_date}")
-        print(filtered_tables)
-        print(set_type)
+        results.append(
+            {
+                "id": f"{era_id}-{set_name}",
+                "era_id": era_id,
+                "name": set_name,
+                "release_date": release_date,
+                "type": set_type,
+                "tables": parsed_tables,
+            }
+        )
 
-
-scrape_html()
+    return results

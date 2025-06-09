@@ -1,6 +1,7 @@
 import re
 
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 year_pattern = re.compile(r"\d{4}")
 full_date_pattern = re.compile(r".*?\d{4}")
@@ -30,16 +31,29 @@ def find_release_date(html, language):
 
         if ":" not in text and year_pattern.search(text):
             if match := full_date_pattern.search(text):
-                return match.group(0).strip()
+                return _normalise_date(match.group(0).strip())
 
         language_dates = _extract_language_dates(text)
 
         if language in language_dates:
-            return language_dates[language]
+            return _normalise_date(language_dates[language])
         elif language_dates:
             return next(iter(language_dates.values()))
 
     return None
+
+
+def _normalise_date(date_str):
+    try:
+        return datetime.strptime(date_str, "%B %d, %Y").date()
+    except ValueError:
+        try:
+            return datetime.strptime(date_str, "%B %Y").date().replace(day=1)
+        except ValueError:
+            try:
+                return datetime.strptime(date_str, "%Y").date().replace(month=1, day=1)
+            except ValueError:
+                return None
 
 
 def _extract_language_dates(text):

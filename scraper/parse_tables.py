@@ -3,18 +3,18 @@ from bs4 import BeautifulSoup
 
 REQUIRED_TABLE_KEYWORDS = {"set list", "card list", "deck list"}
 REQUIRED_HEADER_KEYWORDS = {"no", "card", "type"}
-VALID_HEADERS = {
-    "no.",
-    "number",
-    "no",
-    "mark",
-    "card",
-    "card name",
-    "type",
-    "rarity",
-    "promotion",
-    "quantity",
-    "name",
+HEADER_MAP = {
+    "no.": "set_number",
+    "number": "set_number",
+    "no": "set_number",
+    "mark": "mark",
+    "card": "name",
+    "card name": "name",
+    "name": "name",
+    "type": "type",
+    "rarity": "rarity",
+    "promotion": "promotion",
+    "quantity": "quantity",
 }
 EMPTY_CELL_PLACEHOLDER = "-"
 
@@ -61,10 +61,10 @@ def _find_header_row(table):
 
 def _extract_headers(header_row):
     headers = [
-        cell.get_text().strip()
+        HEADER_MAP[cell.get_text().strip().lower()]
         for cell in header_row.find_all(["th", "td"])
         if not (cell.get("style") and "display:none" in cell.get("style").lower())
-        if cell.get_text().strip().lower() in VALID_HEADERS
+        and cell.get_text().strip().lower() in HEADER_MAP
     ]
 
     return list(dict.fromkeys(headers))
@@ -134,11 +134,24 @@ def _parse_rows(table, header_row_index, headers):
     return data_rows
 
 
+def _is_duplicate_header_row(row, headers):
+    return all(
+        row[i].strip().lower() in HEADER_MAP
+        and HEADER_MAP[row[i].strip().lower()] == headers[i]
+        for i in range(len(headers))
+    )
+
+
 def parse_tables(html, set_name):
     soup = BeautifulSoup(html, "html.parser")
     results = []
 
-    for table, list_type in _find_good_tables(soup):
+    good_tables = _find_good_tables(soup)
+
+    if not good_tables:
+        return results, None
+
+    for table, list_type in good_tables:
         header_row, header_row_index = _find_header_row(table)
         if not header_row:
             continue
@@ -155,16 +168,7 @@ def parse_tables(html, set_name):
         if not data_rows:
             continue
 
-        first_row = data_rows[0]
-        if len(first_row) == len(headers) and all(
-            first_row[i].lower().replace("-", "").strip()
-            == headers[i].lower().replace("-", "").strip()
-            or (
-                first_row[i] == EMPTY_CELL_PLACEHOLDER
-                and headers[i] != EMPTY_CELL_PLACEHOLDER
-            )
-            for i in range(len(headers))
-        ):
+        if data_rows and _is_duplicate_header_row(data_rows[0], headers):
             data_rows = data_rows[1:]
 
         table_results = [
