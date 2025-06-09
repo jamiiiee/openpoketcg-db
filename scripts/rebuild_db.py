@@ -90,7 +90,6 @@ era_list = list(era_map.keys())
 
 retrieve_html()
 update_html(rebuild=True, eras=era_list)
-update_html_zip()
 
 sets = scrape_html(language_map, era_map)
 cards = get_cards(sets)
@@ -99,4 +98,5 @@ truncate_tables()
 insert_sets(sets)
 insert_cards(cards)
 
+update_html_zip()
 clean_html()
