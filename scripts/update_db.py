@@ -40,18 +40,24 @@ def insert_sets(sets):
         cur.executemany(SQL_INSERT_SETS, sets)
 
 
+print("Starting database update")
 language_map = get_language_map()
 era_map = get_era_map()
 ongoing_era_list = get_ongoing_era_names()
 
+print("Downloading recent HTML for ongoing eras")
 update_html(rebuild=False, eras=ongoing_era_list)
 
+print("Scraping HTML files")
 sets = scrape_html(language_map, era_map)
 set_ids = [set["id"] for set in sets]
 cards = get_cards(sets)
 
+print("Updating database")
 delete_cards(set_ids)
 insert_sets(sets)
 insert_cards(cards)
 
 clean_html()
+
+print("Database update completed successfully")

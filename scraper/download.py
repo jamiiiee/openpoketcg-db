@@ -75,6 +75,7 @@ def _download_html(links):
 
 def update_html(rebuild, eras):
     if not HTML_DIR.exists():
+        print("Creating HTML directory")
         HTML_DIR.mkdir(parents=True)
 
     tables = _find_series_tables()
