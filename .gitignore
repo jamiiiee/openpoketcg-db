@@ -8,7 +8,6 @@ __pycache__/
 *.log
 *.sqlite3
 .env
-.env.*
 
 html/
 html.zip
