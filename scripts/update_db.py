@@ -53,11 +53,11 @@ sets = scrape_html(language_map, era_map)
 set_ids = [set["id"] for set in sets]
 cards = get_cards(sets)
 
+clean_html()
+
 print("Updating database")
 delete_cards(set_ids)
 insert_sets(sets)
 insert_cards(cards)
-
-clean_html()
 
 print("Database update completed successfully")
