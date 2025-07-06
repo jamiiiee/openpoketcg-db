@@ -25,19 +25,25 @@ def insert_sets(sets):
         cur.executemany(SQL_INSERT_SETS, sets)
 
 
+print("Starting database rebuild")
 language_map = get_language_map()
 era_map = get_era_map()
 era_list = list(era_map.keys())
 
+print("Retrieving HTML files for all eras, and downloading any missing")
 retrieve_html()
 update_html(rebuild=True, eras=era_list)
 
+print("Scraping HTML files")
 sets = scrape_html(language_map, era_map)
 cards = get_cards(sets)
 
+update_html_zip()
+clean_html()
+
+print("Rebuilding database")
 truncate_tables()
 insert_sets(sets)
 insert_cards(cards)
 
-update_html_zip()
-clean_html()
+print("Database rebuild completed successfully")
