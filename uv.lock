@@ -479,7 +479,7 @@ wheels = [
 ]
 
 [[package]]
-name = "openpoketcg-scraper"
+name = "openpoketcg-db"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

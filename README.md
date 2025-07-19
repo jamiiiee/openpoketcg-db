@@ -1,4 +1,5 @@
-# OpenPokeTCG-Scraper
+# OpenPokeTCG DB
+This project is currently in Alpha, v0.1.0. Documentation will be added with a more stable version.
 
 ## Attribution
 
