@@ -9,7 +9,16 @@ load_dotenv()
 
 
 def retrieve_html():
-    supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_KEY")
+
+    if not supabase_url or not supabase_key:
+        raise EnvironmentError(
+            "Environment variables SUPABASE_URL and SUPABASE_KEY must be set."
+        )
+
+    supabase = create_client(supabase_url, supabase_key)
+
     try:
         res = supabase.storage.from_("html").download("html.zip")
         with open("html.zip", "wb") as f:
@@ -26,7 +35,17 @@ def retrieve_html():
 
 def update_html_zip():
     shutil.make_archive("html", "zip", "html")
-    supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_KEY")
+
+    if not supabase_url or not supabase_key:
+        raise EnvironmentError(
+            "Environment variables SUPABASE_URL and SUPABASE_KEY must be set."
+        )
+
+    supabase = create_client(supabase_url, supabase_key)
+
     try:
         with open("html.zip", "rb") as f:
             supabase.storage.from_("html").upload(
